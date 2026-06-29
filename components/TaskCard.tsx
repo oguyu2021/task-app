@@ -3,6 +3,12 @@ type TaskCardProps = {
 	title: string;
 	dueDate: string;
 	completed: boolean;
+	onEdit: (task: {
+    id: number;
+    title: string;
+    dueDate: string;
+    completed: boolean;
+  }) => void;
 	onDelete: (id: number) => void;
 };
 
@@ -11,6 +17,7 @@ export default function TaskCard({
 	title,
 	dueDate,
 	completed,
+	onEdit,
 	onDelete,
 }: TaskCardProps) {
 	return (
@@ -22,6 +29,15 @@ export default function TaskCard({
 			<p className="text-sm text-gray-500">
 				期限:{dueDate}
 			</p>
+
+			<button
+				onClick={() =>
+					onEdit({ id, title, dueDate, completed })
+				}
+				className="mr-2 rounded bg-gray-500 px-3 py-2 text-white"
+			>
+				編集
+			</button>
 
 			<button
 				onClick={()=>onDelete(id)}

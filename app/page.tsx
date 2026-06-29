@@ -12,7 +12,7 @@ type Task = {
 }
 
 export default function Home() {
-  // タスク一覧
+  // タスク一覧（最初から表示されているやつ）
   const [tasks, setTasks] = useState([
     {
       id: 1,
@@ -53,6 +53,35 @@ export default function Home() {
     setDueDate("");
   };
 
+  //タスク編集
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDueDate, setEditDueDate] = useState("");
+
+  const startEdit = (task: Task) => {
+    setEditingId(task.id);
+    setEditTitle(task.title);
+    setEditDueDate(task.dueDate);
+  };
+
+  const saveEdit = () => {
+    const updatedTasks = tasks.map((task) =>
+      task.id === editingId
+        ? {
+            ...task,
+            title: editTitle,
+            dueDate: editDueDate,
+          }
+        : task
+    );
+
+    setTasks(updatedTasks);
+
+    setEditingId(null);
+    setEditTitle("");
+    setEditDueDate("");
+  };
+
   //タスク削除
   const deleteTask = (id: number) => {
     const newTasks = tasks.filter((task) => task.id !== id);
@@ -80,6 +109,7 @@ export default function Home() {
 
             <input
               type="date"
+              placeholder="タスク期限"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               className="w-full rounded border p-2"
@@ -91,9 +121,36 @@ export default function Home() {
             >
               タスク追加
             </button>
+            
+            {/* タスク編集時 */}
+            {editingId ? (
+              <div className="mb-6 space-y-3 rounded bg-white p-4 shadow">
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full border p-2"
+                />
+
+                <input
+                  type="date"
+                  value={editDueDate}
+                  onChange={(e) => setEditDueDate(e.target.value)}
+                  className="w-full border p-2"
+                />
+
+                <button
+                  onClick={saveEdit}
+                  className="bg-green-600 px-4 py-2 text-white"
+                >
+                  保存
+                </button>
+              </div>
+            ) : null}
+
           </div>
         </div>
 
+        {/* タスク一覧 */}
         <div className="space-y-4">
           {tasks.map((task) => (
             <TaskCard
@@ -102,10 +159,12 @@ export default function Home() {
               title={task.title}
               dueDate={task.dueDate}
               completed={task.completed}
+              onEdit={startEdit}
               onDelete={deleteTask}
             />
           ))}
         </div>
+
       </section>
 
     </main>
