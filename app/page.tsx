@@ -53,6 +53,13 @@ export default function Home() {
     setDueDate("");
   };
 
+  //タスク削除
+  const deleteTask = (id: number) => {
+    const newTasks = tasks.filter((task) => task.id !== id);
+
+    setTasks(newTasks);
+  }
+
   return (
     <main className="min-h-screen bg-gray-100">
       <Header />
@@ -91,9 +98,11 @@ export default function Home() {
           {tasks.map((task) => (
             <TaskCard
               key={task.id}
+              id={task.id}
               title={task.title}
               dueDate={task.dueDate}
               completed={task.completed}
+              onDelete={deleteTask}
             />
           ))}
         </div>
