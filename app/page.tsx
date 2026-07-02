@@ -97,6 +97,7 @@ export default function Home() {
     setDueDate("");
   };
 
+  //チェック機能
   const toggleTask = (id: number) => {
     setTasks(
       tasks.map((task) => 
@@ -110,11 +111,57 @@ export default function Home() {
     );
   };
 
+  //フィルター機能(state)
+  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+
+  //フィルター機能(表示)
+  const filteredTasks = tasks.filter((task) => {
+    if (filter === "active") return !task.completed;
+    if (filter === "completed") return task.completed;
+    return true;
+  });
+
   return (
     <main className="min-h-screen bg-gray-100">
       <Header />
 
       <section className="mx-auto max-w-3xl p-6">
+      
+        <div className="mb-4 flex gap-2">
+          <button
+            onClick={() => setFilter("all")}
+            className={`rounded px-3 py-1 ${
+              filter === "all"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            全部
+          </button>
+
+          <button
+            onClick={() => setFilter("active")}
+            className={`rounded px-3 py-1 ${
+              filter === "active"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            未完了
+          </button>
+
+          <button
+            onClick={() => setFilter("completed")}
+            className={`rounded px-3 py-1 ${
+              filter === "completed"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            完了済み
+          </button>
+        </div>
+
         <TaskForm
           title={title}
           dueDate={dueDate}
@@ -126,7 +173,7 @@ export default function Home() {
         />
 
         <TaskList
-          tasks={tasks}
+          tasks={filteredTasks}
           onDelete={deleteTask}
           onEdit={startEdit}
           onToggle={toggleTask}
