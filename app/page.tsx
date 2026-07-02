@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import Header from "@/components/Header";
 import TaskForm from "@/components/TaskForm";
@@ -31,6 +31,19 @@ export default function Home() {
 
   // 編集中のタスクID
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  useEffect(() => {
+      const savedTasks = localStorage.getItem("tasks");
+
+      if(savedTasks) {
+        setTasks(JSON.parse(savedTasks));
+      }
+    }, []);
+
+  //tasksが変わるたびに保存
+  useEffect(() => {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
 
   // タスク追加
   const addTask = () => {
