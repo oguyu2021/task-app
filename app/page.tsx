@@ -9,7 +9,7 @@ import TaskList from "@/components/TaskList";
 import { Task } from "@/types/task";
 
 export default function Home() {
-  // タスク一覧
+  // タスク一覧（初期データ）
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: 1,
@@ -32,6 +32,7 @@ export default function Home() {
   // 編集中のタスクID
   const [editingId, setEditingId] = useState<number | null>(null);
 
+  //初回でローカルストレージに保管されたタスクを表示（文字列→配列）
   useEffect(() => {
       const savedTasks = localStorage.getItem("tasks");
 
@@ -40,7 +41,7 @@ export default function Home() {
       }
     }, []);
 
-  //tasksが変わるたびに保存
+  //tasksが変わるたびにローカルストレージに保存（配列→文字列）
   useEffect(() => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
@@ -96,6 +97,19 @@ export default function Home() {
     setDueDate("");
   };
 
+  const toggleTask = (id: number) => {
+    setTasks(
+      tasks.map((task) => 
+       task.id === id
+          ?{
+            ...task,
+            completed: !task.completed,
+           }
+          : task
+      )
+    );
+  };
+
   return (
     <main className="min-h-screen bg-gray-100">
       <Header />
@@ -115,6 +129,7 @@ export default function Home() {
           tasks={tasks}
           onDelete={deleteTask}
           onEdit={startEdit}
+          onToggle={toggleTask}
         />
       </section>
     </main>

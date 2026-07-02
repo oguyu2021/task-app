@@ -5,12 +5,14 @@ type Props = {
   tasks: Task[];
   onDelete: (id: number) => void;
   onEdit: (task: Task) => void;
+  onToggle: (id: number) => void;
 };
 
 export default function TaskList({
   tasks,
   onDelete,
   onEdit,
+  onToggle,
 }: Props) {
   return (
     <div className="space-y-4">
@@ -20,6 +22,7 @@ export default function TaskList({
           task={task}
           onDelete={onDelete}
           onEdit={onEdit}
+          onToggle={onToggle}
         />
       ))}
     </div>
