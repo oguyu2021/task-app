@@ -8,6 +8,8 @@ import TaskList from "@/components/TaskList";
 
 import { Task } from "@/types/task";
 
+import Dashboard from "@/components/Dashboard";
+
 export default function Home() {
   // タスク一覧（初期データ）
   const [tasks, setTasks] = useState<Task[]>([
@@ -111,6 +113,20 @@ export default function Home() {
     );
   };
 
+  //ダッシュボード表示
+  //全件数
+  const totalCount = tasks.length;
+
+  //完了数
+  const completedCount = tasks.filter(
+    (task) => task.completed
+  ).length;
+
+  //完了済数
+  const activeCount = tasks.filter(
+    (task) => !task.completed
+  ).length;
+
   //フィルター機能(state)
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
 
@@ -165,6 +181,12 @@ export default function Home() {
       <Header />
 
       <section className="mx-auto max-w-3xl p-6">
+
+        <Dashboard
+          total={totalCount}
+          active={activeCount}
+          completed={completedCount}
+        />
 
         <div className="mb-4">
           <input
