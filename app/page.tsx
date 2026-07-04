@@ -119,20 +119,45 @@ export default function Home() {
 
   //フィルター機能(表示)
   const filteredTasks = tasks.filter((task) => {
-  // フィルター
-  const matchesFilter =
-    filter === "all"
-      ? true
-      : filter === "active"
-      ? !task.completed
-      : task.completed;
+    const matchesFilter =
+      filter === "all"
+        ? true
+        : filter === "active"
+        ? !task.completed
+        : task.completed;
 
-  // 検索
-  const matchesSearch = task.title
-    .toLowerCase()
-    .includes(searchText.toLowerCase());
+    const matchesSearch = task.title
+      .toLowerCase()
+      .includes(searchText.toLowerCase());
 
-    return matchesFilter && matchesSearch;
+      return matchesFilter && matchesSearch;
+  });
+
+  //ソート機能
+  const [sortType, setSortType] = useState<
+    "created" | "dueAsc" | "dueDesc" | "title"
+  >("created");
+
+  const sortedTasks = [...filteredTasks].sort((a, b) => {
+    switch (sortType) {
+      case "dueAsc":
+        return (
+          new Date(a.dueDate).getTime() -
+          new Date(b.dueDate).getTime()
+        );
+
+      case "dueDesc":
+        return (
+          new Date(b.dueDate).getTime() -
+          new Date(a.dueDate).getTime()
+        );
+
+      case "title":
+        return a.title.localeCompare(b.title);
+
+      default:
+        return b.id - a.id;
+    }
   });
 
   return (
@@ -149,6 +174,27 @@ export default function Home() {
             onChange={(e) => setSearchText(e.target.value)}
             className="w-full rounded border p-2"
           />
+        </div>
+
+        <div className="mb-4">
+          <select
+            value={sortType}
+            onChange={(e)=>
+              setSortType(
+                e.target.value as
+                | "created"
+                | "dueAsc"
+                | "dueDesc"
+                | "title"
+              )
+            }
+            className="rounded border p-2"
+          >
+            <option value="created">作成順</option>
+            <option value="dueAsc">期限が近い順</option>
+            <option value="dueDesc">期限が遠い順</option>
+            <option value="title">タイトル順</option>
+          </select>
         </div>
       
         <div className="mb-4 flex gap-2">
@@ -198,7 +244,7 @@ export default function Home() {
         />
 
         <TaskList
-          tasks={filteredTasks}
+          tasks={sortedTasks}
           onDelete={deleteTask}
           onEdit={startEdit}
           onToggle={toggleTask}
