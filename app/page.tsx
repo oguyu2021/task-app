@@ -114,11 +114,25 @@ export default function Home() {
   //フィルター機能(state)
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
 
+  //検索機能(state)
+  const [searchText, setSearchText] = useState("");
+
   //フィルター機能(表示)
   const filteredTasks = tasks.filter((task) => {
-    if (filter === "active") return !task.completed;
-    if (filter === "completed") return task.completed;
-    return true;
+  // フィルター
+  const matchesFilter =
+    filter === "all"
+      ? true
+      : filter === "active"
+      ? !task.completed
+      : task.completed;
+
+  // 検索
+  const matchesSearch = task.title
+    .toLowerCase()
+    .includes(searchText.toLowerCase());
+
+    return matchesFilter && matchesSearch;
   });
 
   return (
@@ -126,8 +140,19 @@ export default function Home() {
       <Header />
 
       <section className="mx-auto max-w-3xl p-6">
+
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="タスクを検索..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="w-full rounded border p-2"
+          />
+        </div>
       
         <div className="mb-4 flex gap-2">
+
           <button
             onClick={() => setFilter("all")}
             className={`rounded px-3 py-1 ${
