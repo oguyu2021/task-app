@@ -12,20 +12,7 @@ import Dashboard from "@/components/Dashboard";
 
 export default function Home() {
   // タスク一覧（初期データ）
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: 1,
-      title: "Next.jsを学習する",
-      dueDate: "2026-07-10",
-      completed: false,
-    },
-    {
-      id: 2,
-      title: "ポートフォリオ作成",
-      dueDate: "2026-07-15",
-      completed: false,
-    },
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   // フォーム入力
   const [title, setTitle] = useState("");
@@ -36,12 +23,17 @@ export default function Home() {
 
   //初回でローカルストレージに保管されたタスクを表示（文字列→配列）
   useEffect(() => {
-      const savedTasks = localStorage.getItem("tasks");
+    const fetchTasks = async () => {
+      const res = await fetch("/api/tasks");
 
-      if(savedTasks) {
-        setTasks(JSON.parse(savedTasks));
-      }
-    }, []);
+      const data = await res.json();
+
+      setTasks(data);
+    };
+
+    fetchTasks();
+
+  }, []);
 
   //tasksが変わるたびにローカルストレージに保存（配列→文字列）
   useEffect(() => {
@@ -49,18 +41,24 @@ export default function Home() {
   }, [tasks]);
 
   // タスク追加
-  const addTask = () => {
+  const addTask = async () => {
     if (!title.trim()) {
       alert("タスク名を入力してください。");
       return;
     }
 
-    const newTask: Task = {
-      id: Date.now(),
-      title,
-      dueDate,
-      completed: false,
-    };
+    const res = await fetch("/api/tasks",{
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title,
+        dueDate,
+      }),
+    });
+
+    const newTask = await res.json();
 
     setTasks([...tasks, newTask]);
 
@@ -69,8 +67,14 @@ export default function Home() {
   };
 
   // タスク削除
-  const deleteTask = (id: number) => {
-    setTasks(tasks.filter((task) => task.id !== id));
+  const deleteTask = async (id: number) => {
+    await fetch(`/api/tasks/${id}`,{
+      method: "DELETE",
+    });
+
+    setTasks((prev)=>
+     prev.filter((task) => task.id !== id)
+    );
   };
 
   // 編集開始
@@ -81,15 +85,28 @@ export default function Home() {
   };
 
   // 編集保存
-  const saveEdit = () => {
-    setTasks(
-      tasks.map((task) =>
+  const saveEdit = async () => {
+    if (editingId === null) {
+      return;
+    }
+
+    const res = await fetch(`/api/tasks/${editingId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title,
+        dueDate,
+      }),
+    });
+
+    const updatedTask = await res.json();
+
+    setTasks((prev) =>
+      prev.map((task) =>
         task.id === editingId
-          ? {
-              ...task,
-              title,
-              dueDate,
-            }
+          ? updatedTask
           : task
       )
     );
@@ -100,14 +117,31 @@ export default function Home() {
   };
 
   //チェック機能
-  const toggleTask = (id: number) => {
-    setTasks(
-      tasks.map((task) => 
-       task.id === id
-          ?{
-            ...task,
-            completed: !task.completed,
-           }
+  const toggleTask = async (id: number) => {
+    const targetTask = tasks.find(
+      (task) => task.id === id
+    );
+
+    if (!targetTask) {
+      return;
+    }
+
+    const res = await fetch(`/api/tasks/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        completed: !targetTask.completed,
+      }),
+    });
+
+    const updatedTask = await res.json();
+
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === id
+          ? updatedTask
           : task
       )
     );
