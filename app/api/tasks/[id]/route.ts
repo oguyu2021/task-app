@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+//削除機能
 export async function DELETE(
   request: Request,
   {
@@ -20,6 +21,7 @@ export async function DELETE(
   return NextResponse.json(task);
 }
 
+//編集機能
 export async function PATCH(
   request: Request,
   {

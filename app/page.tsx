@@ -13,6 +13,9 @@ import Dashboard from "@/components/Dashboard";
 export default function Home() {
   // タスク一覧（初期データ）
   const [tasks, setTasks] = useState<Task[]>([]);
+  
+  //ローディング
+  const [loading, setLoading] = useState(true);
 
   // フォーム入力
   const [title, setTitle] = useState("");
@@ -21,24 +24,21 @@ export default function Home() {
   // 編集中のタスクID
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  //初回でローカルストレージに保管されたタスクを表示（文字列→配列）
+  //初回でDBに保存されているタスクを表示
   useEffect(() => {
     const fetchTasks = async () => {
-      const res = await fetch("/api/tasks");
+      try{
+        const res = await fetch("/api/tasks");
+        const data = await res.json();
 
-      const data = await res.json();
-
-      setTasks(data);
+        setTasks(data);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchTasks();
-
   }, []);
-
-  //tasksが変わるたびにローカルストレージに保存（配列→文字列）
-  useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
 
   // タスク追加
   const addTask = async () => {
@@ -77,14 +77,14 @@ export default function Home() {
     );
   };
 
-  // 編集開始
+  // タスク編集開始
   const startEdit = (task: Task) => {
     setEditingId(task.id);
     setTitle(task.title);
     setDueDate(task.dueDate);
   };
 
-  // 編集保存
+  // タスク編集保存（タイトル、期日）
   const saveEdit = async () => {
     if (editingId === null) {
       return;
@@ -116,7 +116,7 @@ export default function Home() {
     setDueDate("");
   };
 
-  //チェック機能
+  //タスク編集(チェック）
   const toggleTask = async (id: number) => {
     const targetTask = tasks.find(
       (task) => task.id === id
@@ -215,96 +215,103 @@ export default function Home() {
       <Header />
 
       <section className="mx-auto max-w-3xl p-6">
-
-        <Dashboard
-          total={totalCount}
-          active={activeCount}
-          completed={completedCount}
-        />
-
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="タスクを検索..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className="w-full rounded border p-2"
+        {loading ? (
+          <p className="py-12 text-center text-lg text-gray-500 animate-pulse">
+            読み込み中・・・
+          </p>
+        ) : (
+        <>
+          <Dashboard
+            total={totalCount}
+            active={activeCount}
+            completed={completedCount}
           />
-        </div>
 
-        <div className="mb-4">
-          <select
-            value={sortType}
-            onChange={(e)=>
-              setSortType(
-                e.target.value as
-                | "created"
-                | "dueAsc"
-                | "dueDesc"
-                | "title"
-              )
-            }
-            className="rounded border p-2"
-          >
-            <option value="created">作成順</option>
-            <option value="dueAsc">期限が近い順</option>
-            <option value="dueDesc">期限が遠い順</option>
-            <option value="title">タイトル順</option>
-          </select>
-        </div>
-      
-        <div className="mb-4 flex gap-2">
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="タスクを検索..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full rounded border p-2"
+            />
+          </div>
 
-          <button
-            onClick={() => setFilter("all")}
-            className={`rounded px-3 py-1 ${
-              filter === "all"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200"
-            }`}
-          >
-            全部
-          </button>
+          <div className="mb-4">
+            <select
+              value={sortType}
+              onChange={(e)=>
+                setSortType(
+                  e.target.value as
+                  | "created"
+                  | "dueAsc"
+                  | "dueDesc"
+                  | "title"
+                )
+              }
+              className="rounded border p-2"
+            >
+              <option value="created">作成順</option>
+              <option value="dueAsc">期限が近い順</option>
+              <option value="dueDesc">期限が遠い順</option>
+              <option value="title">タイトル順</option>
+            </select>
+          </div>
+        
+          <div className="mb-4 flex gap-2">
 
-          <button
-            onClick={() => setFilter("active")}
-            className={`rounded px-3 py-1 ${
-              filter === "active"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200"
-            }`}
-          >
-            未完了
-          </button>
+            <button
+              onClick={() => setFilter("all")}
+              className={`rounded px-3 py-1 ${
+                filter === "all"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200"
+              }`}
+            >
+              全部
+            </button>
 
-          <button
-            onClick={() => setFilter("completed")}
-            className={`rounded px-3 py-1 ${
-              filter === "completed"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200"
-            }`}
-          >
-            完了済み
-          </button>
-        </div>
+            <button
+              onClick={() => setFilter("active")}
+              className={`rounded px-3 py-1 ${
+                filter === "active"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200"
+              }`}
+            >
+              未完了
+            </button>
 
-        <TaskForm
-          title={title}
-          dueDate={dueDate}
-          editingId={editingId}
-          onTitleChange={setTitle}
-          onDueDateChange={setDueDate}
-          onAdd={addTask}
-          onSave={saveEdit}
-        />
+            <button
+              onClick={() => setFilter("completed")}
+              className={`rounded px-3 py-1 ${
+                filter === "completed"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200"
+              }`}
+            >
+              完了済み
+            </button>
+          </div>
 
-        <TaskList
-          tasks={sortedTasks}
-          onDelete={deleteTask}
-          onEdit={startEdit}
-          onToggle={toggleTask}
-        />
+          <TaskForm
+            title={title}
+            dueDate={dueDate}
+            editingId={editingId}
+            onTitleChange={setTitle}
+            onDueDateChange={setDueDate}
+            onAdd={addTask}
+            onSave={saveEdit}
+          />
+
+          <TaskList
+            tasks={sortedTasks}
+            onDelete={deleteTask}
+            onEdit={startEdit}
+            onToggle={toggleTask}
+          />
+        </>
+        )}
       </section>
     </main>
   );
