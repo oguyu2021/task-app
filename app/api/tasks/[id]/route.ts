@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { taskUpdateSchema } from "@/schemas/taskUpdate";
+import { z } from "zod";
 
 //削除機能
 export async function DELETE(
@@ -34,21 +36,34 @@ export async function PATCH(
 
   const body = await request.json();
 
+  const result = taskUpdateSchema.safeParse(body);
+
+  if(!result.success){
+    return NextResponse.json(
+      {
+        errors: z.flattenError(result.error),
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
   const task = await prisma.task.update({
     where: {
       id: Number(id),
     },
     data: {
-      ...(body.title !== undefined && {
-        title: body.title,
+      ...(result.data.title !== undefined && {
+        title: result.data.title,
       }),
 
-      ...(body.dueDate !== undefined && {
-        dueDate: new Date(body.dueDate),
+      ...(result.data.dueDate !== undefined && {
+        dueDate: new Date(result.data.dueDate),
       }),
 
-      ...(body.completed !== undefined && {
-        completed: body.completed,
+      ...(result.data.completed !== undefined && {
+        completed: result.data.completed,
       }),
     },
   });

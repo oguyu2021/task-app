@@ -1,16 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import Header from "@/components/Header";
 import TaskForm from "@/components/TaskForm";
 import TaskList from "@/components/TaskList";
-
 import { Task } from "@/types/task";
-
 import Dashboard from "@/components/Dashboard";
-
 import { toast } from "sonner";
+import { taskSchema } from "@/schemas/task";
 
 export default function Home() {
   // タスク一覧（初期データ）
@@ -55,15 +52,16 @@ export default function Home() {
 
   // タスク追加
   const addTask = async () => {
-  if (!title.trim()) {
-    toast.error("タスク名を入力してください。");
-    return;
-  }
 
-  if (!dueDate) {
-    toast.error("期限を入力してください。");
-    return;
-  }
+    const result = taskSchema.safeParse({
+      title,
+      dueDate,
+    })
+
+    if(!result.success){
+      toast.error(result.error.issues[0].message)
+      return;
+    }
 
   try {
       const res = await fetch("/api/tasks", {
@@ -143,7 +141,15 @@ export default function Home() {
       });
 
       if (!res.ok) {
-        throw new Error("更新に失敗しました");
+        const error = await res.json();
+
+        const message =
+          error.errors?.fieldErrors?.title?.[0] ||
+          "更新に失敗しました";
+
+        toast.error(message);
+
+        return;
       }
 
       const updatedTask = await res.json();
