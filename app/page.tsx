@@ -10,12 +10,17 @@ import { Task } from "@/types/task";
 
 import Dashboard from "@/components/Dashboard";
 
+import { toast } from "sonner";
+
 export default function Home() {
   // タスク一覧（初期データ）
   const [tasks, setTasks] = useState<Task[]>([]);
   
   //ローディング
   const [loading, setLoading] = useState(true);
+
+  //エラーハンドリング
+  const [error, setError] = useState("");
 
   // フォーム入力
   const [title, setTitle] = useState("");
@@ -29,9 +34,17 @@ export default function Home() {
     const fetchTasks = async () => {
       try{
         const res = await fetch("/api/tasks");
+
+        if(!res.ok) {
+          throw new Error("取得失敗");
+        }
+
         const data = await res.json();
 
         setTasks(data);
+      }catch (error) {
+        console.error(error);
+        setError("タスクの取得に失敗しました。");
       } finally {
         setLoading(false);
       }
@@ -42,39 +55,66 @@ export default function Home() {
 
   // タスク追加
   const addTask = async () => {
-    if (!title.trim()) {
-      alert("タスク名を入力してください。");
-      return;
+  if (!title.trim()) {
+    toast.error("タスク名を入力してください。");
+    return;
+  }
+
+  if (!dueDate) {
+    toast.error("期限を入力してください。");
+    return;
+  }
+
+  try {
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          dueDate,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("タスク追加に失敗しました。");
+      }
+
+      const newTask = await res.json();
+
+      setTasks((prev) => [...prev, newTask]);
+
+      setTitle("");
+      setDueDate("");
+
+      toast.success("タスクを追加しました。");
+    } catch (error) {
+      console.error(error);
+      toast.error("タスクの追加に失敗しました。");
     }
-
-    const res = await fetch("/api/tasks",{
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title,
-        dueDate,
-      }),
-    });
-
-    const newTask = await res.json();
-
-    setTasks([...tasks, newTask]);
-
-    setTitle("");
-    setDueDate("");
   };
 
   // タスク削除
   const deleteTask = async (id: number) => {
-    await fetch(`/api/tasks/${id}`,{
-      method: "DELETE",
-    });
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "DELETE",
+      });
 
-    setTasks((prev)=>
-     prev.filter((task) => task.id !== id)
-    );
+      if (!res.ok) {
+        throw new Error("削除に失敗しました");
+      }
+
+      setTasks((prev) =>
+        prev.filter((task) => task.id !== id)
+      );
+
+      toast.success("タスクを削除しました。");
+    } catch (error) {
+      console.error(error);
+      toast.error("タスクの削除に失敗しました。");
+    }
   };
 
   // タスク編集開始
@@ -90,33 +130,44 @@ export default function Home() {
       return;
     }
 
-    const res = await fetch(`/api/tasks/${editingId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title,
-        dueDate,
-      }),
-    });
+    try {
+      const res = await fetch(`/api/tasks/${editingId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          dueDate,
+        }),
+      });
 
-    const updatedTask = await res.json();
+      if (!res.ok) {
+        throw new Error("更新に失敗しました");
+      }
 
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === editingId
-          ? updatedTask
-          : task
-      )
-    );
+      const updatedTask = await res.json();
 
-    setEditingId(null);
-    setTitle("");
-    setDueDate("");
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === editingId
+            ? updatedTask
+            : task
+        )
+      );
+
+      setEditingId(null);
+      setTitle("");
+      setDueDate("");
+
+      toast.success("タスクを更新しました。");
+    } catch (error) {
+      console.error(error);
+      toast.error("タスクの更新に失敗しました。");
+    }
   };
 
-  //タスク編集(チェック）
+  //タスク編集(完了状態のチェック部分）
   const toggleTask = async (id: number) => {
     const targetTask = tasks.find(
       (task) => task.id === id
@@ -126,25 +177,36 @@ export default function Home() {
       return;
     }
 
-    const res = await fetch(`/api/tasks/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        completed: !targetTask.completed,
-      }),
-    });
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          completed: !targetTask.completed,
+        }),
+      });
 
-    const updatedTask = await res.json();
+      if (!res.ok) {
+        throw new Error("更新に失敗しました");
+      }
 
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id
-          ? updatedTask
-          : task
-      )
-    );
+      const updatedTask = await res.json();
+
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === id
+            ? updatedTask
+            : task
+        )
+      );
+
+      toast.success("状態を更新しました。");
+    } catch (error) {
+      console.error(error);
+      toast.error("状態の更新に失敗しました。");
+    }
   };
 
   //ダッシュボード表示
@@ -215,11 +277,20 @@ export default function Home() {
       <Header />
 
       <section className="mx-auto max-w-3xl p-6">
+
         {loading ? (
           <p className="py-12 text-center text-lg text-gray-500 animate-pulse">
             読み込み中・・・
           </p>
+
+        ) : error ?(
+
+          <p className="py-12 text-center text-lg text-red-500">
+            {error}
+          </p>
+
         ) : (
+
         <>
           <Dashboard
             total={totalCount}
