@@ -8,6 +8,8 @@ import { Task } from "@/types/task";
 import Dashboard from "@/components/Dashboard";
 import { toast } from "sonner";
 import { taskSchema } from "@/schemas/task";
+import { TaskInput } from "@/schemas/task";
+import EditTaskModal from "@/components/EditTaskModal";
 
 export default function Home() {
   // タスク一覧（初期データ）
@@ -19,12 +21,8 @@ export default function Home() {
   //エラーハンドリング
   const [error, setError] = useState("");
 
-  // フォーム入力
-  const [title, setTitle] = useState("");
-  const [dueDate, setDueDate] = useState("");
-
   // 編集中のタスクID
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   //初回でDBに保存されているタスクを表示
   useEffect(() => {
@@ -51,46 +49,60 @@ export default function Home() {
   }, []);
 
   // タスク追加
-  const addTask = async () => {
+  const addTask = async (data: TaskInput) => {
 
-    const result = taskSchema.safeParse({
-      title,
-      dueDate,
-    })
+    const newTask = {
+      title: data.title,
+      dueDate: data.dueDate,
+    };
 
-    if(!result.success){
-      toast.error(result.error.issues[0].message)
-      return;
-    }
 
-  try {
+    try {
+
       const res = await fetch("/api/tasks", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          title,
-          dueDate,
-        }),
+        body: JSON.stringify(newTask),
       });
 
+
       if (!res.ok) {
-        throw new Error("タスク追加に失敗しました。");
+        const error = await res.json();
+
+        toast.error(
+          error.errors?.fieldErrors?.title?.[0]
+          ??
+          "タスク追加に失敗しました"
+        );
+
+        return;
       }
 
-      const newTask = await res.json();
 
-      setTasks((prev) => [...prev, newTask]);
+      const createdTask = await res.json();
 
-      setTitle("");
-      setDueDate("");
 
-      toast.success("タスクを追加しました。");
+      setTasks((prev) => [
+        ...prev,
+        createdTask,
+      ]);
+
+
+      toast.success(
+        "タスクを追加しました"
+      );
+
+
     } catch (error) {
-      console.error(error);
-      toast.error("タスクの追加に失敗しました。");
+
+      toast.error(
+        "通信エラーが発生しました"
+      );
+
     }
+
   };
 
   // タスク削除
@@ -115,62 +127,65 @@ export default function Home() {
     }
   };
 
-  // タスク編集開始
-  const startEdit = (task: Task) => {
-    setEditingId(task.id);
-    setTitle(task.title);
-    setDueDate(task.dueDate);
-  };
-
   // タスク編集保存（タイトル、期日）
-  const saveEdit = async () => {
-    if (editingId === null) {
-      return;
-    }
+  const updateTask = async (
+    id: number,
+    data: TaskInput
+  ) => {
 
     try {
-      const res = await fetch(`/api/tasks/${editingId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title,
-          dueDate,
-        }),
-      });
+
+      const res = await fetch(
+        `/api/tasks/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
 
       if (!res.ok) {
+
         const error = await res.json();
 
-        const message =
-          error.errors?.fieldErrors?.title?.[0] ||
-          "更新に失敗しました";
-
-        toast.error(message);
+        toast.error(
+          error.errors?.fieldErrors?.title?.[0]
+          ??
+          "更新に失敗しました"
+        );
 
         return;
       }
 
+
       const updatedTask = await res.json();
+
 
       setTasks((prev) =>
         prev.map((task) =>
-          task.id === editingId
+          task.id === id
             ? updatedTask
             : task
         )
       );
 
-      setEditingId(null);
-      setTitle("");
-      setDueDate("");
 
-      toast.success("タスクを更新しました。");
-    } catch (error) {
-      console.error(error);
-      toast.error("タスクの更新に失敗しました。");
+      toast.success(
+        "タスクを更新しました"
+      );
+
+
+    } catch {
+
+      toast.error(
+        "通信エラーが発生しました"
+      );
+
     }
+
   };
 
   //タスク編集(完了状態のチェック部分）
@@ -282,6 +297,14 @@ export default function Home() {
     <main className="min-h-screen bg-gray-100">
       <Header />
 
+      <EditTaskModal
+        task={editingTask}
+        onClose={() =>
+          setEditingTask(null)
+        }
+        onUpdate={updateTask}
+      />
+
       <section className="mx-auto max-w-3xl p-6">
 
         {loading ? (
@@ -372,19 +395,15 @@ export default function Home() {
           </div>
 
           <TaskForm
-            title={title}
-            dueDate={dueDate}
-            editingId={editingId}
-            onTitleChange={setTitle}
-            onDueDateChange={setDueDate}
             onAdd={addTask}
-            onSave={saveEdit}
           />
 
           <TaskList
             tasks={sortedTasks}
             onDelete={deleteTask}
-            onEdit={startEdit}
+            onEdit={(task) =>
+              setEditingTask(task)
+            }
             onToggle={toggleTask}
           />
         </>
