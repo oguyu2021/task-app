@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { taskUpdateSchema } from "@/schemas/taskUpdate";
 import { z } from "zod";
+import { auth } from "@/auth";
 
 //削除機能
 export async function DELETE(
@@ -12,7 +13,31 @@ export async function DELETE(
     params: Promise<{ id: string }>;
   }
 ) {
+
+  const session = await auth();
+
+  if(!session?.user?.id) {
+    return NextResponse.json(
+      {message: "認証されていません"},
+      {status: 401}
+    );
+  }
+
   const { id } = await params;
+
+  const existingTask = await prisma.task.findFirst({
+    where: {
+      id: Number(id),
+      userId: Number(session.user.id),
+    },
+  });
+
+  if (!existingTask) {
+    return NextResponse.json(
+      { message: "このタスクを削除する権限がありません" },
+      { status: 403 }
+    );
+  }
 
   const task = await prisma.task.delete({
     where: {
@@ -32,6 +57,15 @@ export async function PATCH(
     params: Promise<{ id: string }>;
   }
 ) {
+  const session = await auth();
+
+  if(!session?.user?.id) {
+    return NextResponse.json(
+      {message: "認証されていません"},
+      {status: 401}
+    );
+  }
+
   const { id } = await params;
 
   const body = await request.json();
@@ -46,6 +80,20 @@ export async function PATCH(
       {
         status: 400,
       }
+    );
+  }
+
+  const existingTask = await prisma.task.findFirst({
+    where: {
+      id: Number(id),
+      userId: Number(session.user.id),
+    },
+  });
+
+  if (!existingTask) {
+    return NextResponse.json(
+      { message: "このタスクを更新する権限がありません" },
+      { status: 403 }
     );
   }
 

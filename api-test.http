@@ -1,7 +1,8 @@
-POST http://localhost:3000/api/auth/register
+PATCH http://localhost:3000/api/tasks/2
 Content-Type: application/json
 
 {
-  "email": "userB@test.com",
-  "password": "password123"
+  "title": "不正に変更",
+  "dueDate": "2026-07-30",
+  "completed": false
 }
