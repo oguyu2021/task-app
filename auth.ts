@@ -5,6 +5,9 @@ import bcrypt from "bcrypt";
 
 import { prisma } from "@/lib/prisma";
 
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import authConfig from "./auth.config";
+
 
 export const {
   handlers,
@@ -12,6 +15,7 @@ export const {
   signOut,
   auth,
 } = NextAuth({
+  ...authConfig,
 
   providers: [
 
@@ -78,14 +82,8 @@ export const {
 
   ],
 
-
-  session: {
-
-    strategy: "jwt",
-
-  },
-
   callbacks: {
+    ...authConfig.callbacks,
 
     async jwt({ token, user }) {
 
