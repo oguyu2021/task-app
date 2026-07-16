@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { taskSchema } from "@/schemas/task";
 import { TaskInput } from "@/schemas/task";
 import EditTaskModal from "@/components/EditTaskModal";
+import TaskSkeleton from "@/components/TaskSkeleton";
 
 export default function Home() {
   // タスク一覧（初期データ）
@@ -33,6 +34,11 @@ export default function Home() {
         if(!res.ok) {
           throw new Error("取得失敗");
         }
+
+        // Skeleton確認用（1秒待つ）
+        await new Promise(
+          (resolve) => setTimeout(resolve, 1000)
+        );
 
         const data = await res.json();
 
@@ -308,10 +314,7 @@ export default function Home() {
       <section className="mx-auto max-w-3xl p-6">
 
         {loading ? (
-          <p className="py-12 text-center text-lg text-gray-500 animate-pulse">
-            読み込み中・・・
-          </p>
-
+          <TaskSkeleton />
         ) : error ?(
 
           <p className="py-12 text-center text-lg text-red-500">
