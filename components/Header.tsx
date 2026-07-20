@@ -14,7 +14,7 @@ export default function Header() {
 
 			<div className="flex items-center gap-4">
 				<p className="text-sm text-gray-600">
-					{session?.user?.email}
+					 {session?.user?.name ?? "ゲスト"}
 				</p>
 
 				<button
