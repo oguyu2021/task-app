@@ -5,7 +5,6 @@ import bcrypt from "bcrypt";
 
 import { prisma } from "@/lib/prisma";
 
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import authConfig from "./auth.config";
 
 
