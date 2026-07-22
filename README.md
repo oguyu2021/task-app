@@ -6,7 +6,7 @@ Next.js / TypeScript / Prisma / Supabase PostgreSQL を使用して開発した�
 
 ## Demo
 
-https://task-app-6tie.vercel.app/login
+https://task-app-ashen-pi.vercel.app/login
 
 ## Screenshots
 

@@ -9,7 +9,7 @@ export default function Header() {
 	return (
 		<header className="flex items-center justify-between border-b p-6">
 			<h1 className="text-3xl font-bold">
-				Task App
+				Task Management App
 			</h1>
 
 			<div className="flex items-center gap-4">
